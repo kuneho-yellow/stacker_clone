@@ -88,7 +88,7 @@ void gamePhase(void)
 	blockTileY = BASE_Y >> TILE_SIZE_BIT;
 	blockSpeed = INIT_SPEED;
 	blockCount = INIT_BLOCK_COUNT;
-	blockGroupWidth = BLOCK_SIZE * (blockCount - 1);
+	blockGroupWidth = BLOCK_SIZE * blockCount;
 	direction = 1;
 	stackHeight = 0;
 	minStackableX = 0;
@@ -132,11 +132,11 @@ void gamePhase(void)
 			blockTileX += 1;
 		}
 				
-		// Check if block has hit the edges
+		// Check if block group has hit the edges
 		if ((blockX >> FP_BITS) <= SCREEN_MIN ||
-			(blockX >> FP_BITS) + BLOCK_SIZE >= (SCREEN_MAX - blockGroupWidth))
+			(blockX >> FP_BITS) >= (SCREEN_MAX - blockGroupWidth))
 		{
-			// Hit an edge
+			// Reverse direction when hitting the screen edge
 			direction ^= 1;
 		}
 		
@@ -150,56 +150,36 @@ void gamePhase(void)
 				minStackableX = blockTileX;
 			}
 			
-			// Remove floating blocks
-			if (blockTileX < minStackableX)
+			// Check for floaing blocks
+			if (blockTileX != minStackableX)
 			{
-				// No. of extra blocks to the left
-				j = minStackableX - blockTileX;
+				j = (blockTileX < minStackableX) ? (minStackableX - blockTileX)
+				: (blockTileX - minStackableX);
 				if (j > blockCount)
 				{
 					j = blockCount;
 				}
 				
-				// Replace all tiles with the empty tile
-				/*for (i = 0; i < j; ++i)
-				{
-					updateList[3 + (i<<1)] = 0x00;
-					updateList[4 + (i<<1)] = 0x00;
-					updateList[14 + (i<<1)] = 0x00;
-					updateList[15 + (i<<1)] = 0x00;
-				}*/
-				/*
+				// Replace floating blocks with the empty tile
 				for (i = 0; i < (j << 1); ++i)
 				{
-					updateList[3 + i] = 0x00;
-					updateList[14 + i] = 0x00;
+					updateList[2 + (blockCount << 1) - i] = 0x00;
+					updateList[13 + (blockCount << 1) - i] = 0x00;
 				}
-				*/
-								
-				// Update the block count
-				blockCount -= j;
-			}/*
-			else if (blockTileX > minStackableX)
-			{
-				// No. of extra blocks to the right
-				j = blockTileX - minStackableX;
-				if (j > blockCount)
+				// TODO: Store bit-shifted values somewhere?
+				
+				// Update the stackable area edge
+				if (blockTileX > minStackableX)
 				{
-					j = blockCount;
+					minStackableX = blockTileX;
 				}
-		
-				// Replace all tiles with the empty tile
-				j <<= 1;
-				for (i = 0; i < j; ++i)
-				{
-					updateList[10 - i] = 0x00;
-					updateList[21 - i] = 0x00;
-				}
-				j >>= 1;
+				
 				// Update the block count
-				minStackableX += j;
+				oam_clear();
 				blockCount -= j;
-			}*/
+				blockGroupWidth = BLOCK_SIZE * blockCount;
+				// TODO: Remove multiplication above
+			}
 			
 			// Check if gameover: no blocks landed correctly
 			if (blockCount == 0)
@@ -207,16 +187,9 @@ void gamePhase(void)
 				break;
 			}
 			
-			// Fix the block in its current position
-			// by converting it into a background tile	
-			/*for (i = 0; i < 11; ++i)
-			{
-				i16 = NTADR_A(blockTileX << 1, blockTileY << 1);
-				updateList[i] = MSB(i16);
-				updateList[++i] = LSB(i16);
-			}*/
-			//i16 = NTADR_A(blockTileX << 1, (blockTileY - 1) << 1);
-			i16 = NTADR_A(blockTileX << 1, (blockTileY - 1) << 1);
+			// Fix stacked blocks in their current position
+			// by converting them into background tiles	
+			i16 = NTADR_A(minStackableX << 1, (blockTileY - 1) << 1);
 			updateList[0] = MSB(i16) | NT_UPD_HORZ;
 			updateList[1] = LSB(i16);
 			i16 += 32;

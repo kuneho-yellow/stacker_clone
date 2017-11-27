@@ -16,7 +16,7 @@
 	.dbg		file, "src/gameConstants.h", 400, 1511616772
 	.dbg		file, "src/titlePhase.h", 758, 1511707300
 	.dbg		file, "src/nametables/title.h", 1585, 1511702491
-	.dbg		file, "src/gamePhase.h", 6008, 1511762946
+	.dbg		file, "src/gamePhase.h", 5505, 1511767798
 	.dbg		file, "src/nametables/game.h", 622, 1511749442
 	.forceimport	__STARTUP__
 	.dbg		sym, "pal_bg", "00", extern, "_pal_bg"
@@ -633,19 +633,19 @@ L001C:	lda     #$04
 	txa
 	iny
 	sbc     (sp),y
-	bcs     L02D4
+	bcs     L02E2
 	inc     _bright
 ;
 ; else    --bright;
 ;
 	.dbg	line, "src\main.c", 71
-	jmp     L02D3
-L02D4:	dec     _bright
+	jmp     L02E1
+L02E2:	dec     _bright
 ;
 ; pal_bright(bright);
 ;
 	.dbg	line, "src\main.c", 72
-L02D3:	lda     _bright
+L02E1:	lda     _bright
 	jsr     _pal_bright
 ;
 ; while (bright != to)
@@ -736,9 +736,9 @@ L0029:	jmp     incsp2
 ;
 	.dbg	line, "src/titlePhase.h", 30
 	lda     #$00
-L02D5:	jsr     _pad_trigger
+L02E3:	jsr     _pad_trigger
 	tax
-	beq     L02D5
+	beq     L02E3
 ;
 ; pal_fade_to(0);
 ;
@@ -838,11 +838,9 @@ L02D5:	jsr     _pad_trigger
 	lda     #$04
 	sta     _blockCount
 ;
-; blockGroupWidth = BLOCK_SIZE * (blockCount - 1);
+; blockGroupWidth = BLOCK_SIZE * blockCount;
 ;
 	.dbg	line, "src/gamePhase.h", 91
-	sec
-	sbc     #$01
 	asl     a
 	asl     a
 	asl     a
@@ -895,11 +893,11 @@ L02D5:	jsr     _pad_trigger
 ; for (i = 0; i < blockCount; ++i)
 ;
 	.dbg	line, "src/gamePhase.h", 104
-L02DC:	lda     #$00
-L02DD:	sta     _i
-L02DE:	lda     _i
+L02EE:	lda     #$00
+L02EF:	sta     _i
+L02F0:	lda     _i
 	cmp     _blockCount
-	bcs     L0249
+	bcs     L0247
 ;
 ; oam_meta_spr((blockTileX + i) << TILE_SIZE_BIT,
 ;
@@ -948,24 +946,24 @@ L02DE:	lda     _i
 ;
 	.dbg	line, "src/gamePhase.h", 104
 	inc     _i
-	jmp     L02DE
+	jmp     L02F0
 ;
 ; ppu_wait_frame();
 ;
 	.dbg	line, "src/gamePhase.h", 113
-L0249:	jsr     _ppu_wait_frame
+L0247:	jsr     _ppu_wait_frame
 ;
 ; if (isMoving)
 ;
 	.dbg	line, "src/gamePhase.h", 116
 	lda     _isMoving
-	beq     L0257
+	beq     L0255
 ;
 ; if (direction)
 ;
 	.dbg	line, "src/gamePhase.h", 119
 	lda     _direction
-	beq     L0259
+	beq     L0257
 ;
 ; blockX += blockSpeed;
 ;
@@ -979,24 +977,24 @@ L0249:	jsr     _ppu_wait_frame
 ; else
 ;
 	.dbg	line, "src/gamePhase.h", 123
-	jmp     L02E8
+	jmp     L02FC
 ;
 ; blockX -= blockSpeed;
 ;
 	.dbg	line, "src/gamePhase.h", 125
-L0259:	lda     _blockSpeed
+L0257:	lda     _blockSpeed
 	eor     #$FF
 	sec
 	adc     _blockX
 	sta     _blockX
 	lda     #$FF
-L02E8:	adc     _blockX+1
+L02FC:	adc     _blockX+1
 	sta     _blockX+1
 ;
 ; blockTileX = blockX >> TILE_PLUS_FP_BITS;
 ;
 	.dbg	line, "src/gamePhase.h", 129
-L0257:	lda     _blockX+1
+L0255:	lda     _blockX+1
 	sta     _blockTileX
 ;
 ; if ((((blockX & 0x00f0) >> FP_BITS)) >= 8)
@@ -1009,7 +1007,7 @@ L0257:	lda     _blockX+1
 	lsr     a
 	lsr     a
 	cmp     #$08
-	bcc     L0263
+	bcc     L0261
 ;
 ; blockTileX += 1;
 ;
@@ -1019,112 +1017,133 @@ L0257:	lda     _blockX+1
 ; if ((blockX >> FP_BITS) <= SCREEN_MIN ||
 ;
 	.dbg	line, "src/gamePhase.h", 136
-L0263:	lda     _blockX
+L0261:	lda     _blockX
 	ldx     _blockX+1
 	jsr     shrax4
 	cpx     #$00
-	bne     L026D
+	bne     L026B
 	cmp     #$11
-L026D:	bcc     L026B
+L026B:	bcc     L0269
 ;
-; (blockX >> FP_BITS) + BLOCK_SIZE >= (SCREEN_MAX - blockGroupWidth))
+; (blockX >> FP_BITS) >=
 ;
 	.dbg	line, "src/gamePhase.h", 137
 	lda     _blockX
 	ldx     _blockX+1
 	jsr     shrax4
-	clc
-	adc     #$10
-	bcc     L026F
-	inx
-L026F:	jsr     pushax
+;
+; ((SCREEN_MAX - blockGroupWidth)))
+;
+	.dbg	line, "src/gamePhase.h", 138
+	jsr     pushax
 	lda     #$F0
 	sec
 	sbc     _blockGroupWidth
 	jsr     tosicmp0
-	bcc     L02E7
+	bcc     L02FA
 ;
 ; direction ^= 1;
 ;
-	.dbg	line, "src/gamePhase.h", 140
-L026B:	lda     _direction
+	.dbg	line, "src/gamePhase.h", 141
+L0269:	lda     _direction
 	eor     #$01
 	sta     _direction
 ;
 ; if (pad_trigger(0))
 ;
-	.dbg	line, "src/gamePhase.h", 144
-L02E7:	lda     #$00
+	.dbg	line, "src/gamePhase.h", 145
+L02FA:	lda     #$00
 	jsr     _pad_trigger
 	tax
-	jeq     L02DD
+	jeq     L02EF
 ;
 ; if (stackHeight < 1)
 ;
-	.dbg	line, "src/gamePhase.h", 148
+	.dbg	line, "src/gamePhase.h", 149
 	ldx     #$00
 	lda     _stackHeight
-	bne     L02E0
+	bne     L02F2
 ;
 ; minStackableX = blockTileX;
 ;
-	.dbg	line, "src/gamePhase.h", 150
+	.dbg	line, "src/gamePhase.h", 151
 	lda     _blockTileX
 	sta     _minStackableX
 ;
-; if (blockTileX < minStackableX)
+; if (blockTileX != minStackableX)
 ;
-	.dbg	line, "src/gamePhase.h", 154
-L02E0:	lda     _blockTileX
-	cmp     _minStackableX
-	bcs     L02E3
+	.dbg	line, "src/gamePhase.h", 155
+L02F2:	lda     _minStackableX
+	cmp     _blockTileX
+	jeq     L02F6
 ;
-; j = minStackableX - blockTileX;
+; j = (blockTileX < minStackableX) ? (minStackableX - blockTileX)
 ;
 	.dbg	line, "src/gamePhase.h", 157
+	lda     _blockTileX
+	cmp     _minStackableX
+	bcs     L02F3
 	lda     _minStackableX
 	sec
 	sbc     _blockTileX
-	sta     _j
+;
+; : (blockTileX - minStackableX);
+;
+	.dbg	line, "src/gamePhase.h", 158
+	jmp     L02FD
+L02F3:	lda     _blockTileX
+	sec
+	sbc     _minStackableX
+L02FD:	sta     _j
 ;
 ; if (j > blockCount)
 ;
-	.dbg	line, "src/gamePhase.h", 158
+	.dbg	line, "src/gamePhase.h", 159
 	sec
 	sbc     _blockCount
-	bcc     L02E1
-	beq     L02E1
+	bcc     L02F4
+	beq     L02F4
 ;
 ; j = blockCount;
 ;
-	.dbg	line, "src/gamePhase.h", 160
+	.dbg	line, "src/gamePhase.h", 161
 	lda     _blockCount
 	sta     _j
 ;
 ; for (i = 0; i < (j << 1); ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 172
-L02E1:	stx     _i
-L02E2:	lda     _i
+	.dbg	line, "src/gamePhase.h", 165
+L02F4:	stx     _i
+L02F5:	lda     _i
 	jsr     pusha0
 	lda     _j
 	asl     a
-	bcc     L02D7
+	bcc     L02E5
 	ldx     #$01
-L02D7:	jsr     tosicmp
-	bcs     L0284
+L02E5:	jsr     tosicmp
+	bcs     L0289
 ;
-; updateList[3 + i] = 0x00;
+; updateList[2 + (blockCount << 1) - i] = 0x00;
 ;
-	.dbg	line, "src/gamePhase.h", 174
+	.dbg	line, "src/gamePhase.h", 167
 	ldx     #$00
-	lda     _i
-	clc
-	adc     #$03
-	bcc     L02DA
+	lda     _blockCount
+	asl     a
+	bcc     L02EC
 	inx
 	clc
-L02DA:	adc     #<(_updateList)
+L02EC:	adc     #$02
+	bcc     L0294
+	inx
+L0294:	sec
+	sbc     _i
+	pha
+	txa
+	sbc     #$00
+	tax
+	pla
+	clc
+	adc     #<(_updateList)
 	sta     ptr1
 	txa
 	adc     #>(_updateList)
@@ -1133,17 +1152,27 @@ L02DA:	adc     #<(_updateList)
 	tay
 	sta     (ptr1),y
 ;
-; updateList[14 + i] = 0x00;
+; updateList[13 + (blockCount << 1) - i] = 0x00;
 ;
-	.dbg	line, "src/gamePhase.h", 175
+	.dbg	line, "src/gamePhase.h", 168
 	tax
-	lda     _i
-	clc
-	adc     #$0E
-	bcc     L02DB
+	lda     _blockCount
+	asl     a
+	bcc     L02ED
 	inx
 	clc
-L02DB:	adc     #<(_updateList)
+L02ED:	adc     #$0D
+	bcc     L0299
+	inx
+L0299:	sec
+	sbc     _i
+	pha
+	txa
+	sbc     #$00
+	tax
+	pla
+	clc
+	adc     #<(_updateList)
 	sta     ptr1
 	txa
 	adc     #>(_updateList)
@@ -1153,44 +1182,73 @@ L02DB:	adc     #<(_updateList)
 ;
 ; for (i = 0; i < (j << 1); ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 172
+	.dbg	line, "src/gamePhase.h", 165
 	inc     _i
-	jmp     L02E2
+	jmp     L02F5
+;
+; if (blockTileX > minStackableX)
+;
+	.dbg	line, "src/gamePhase.h", 173
+L0289:	lda     _blockTileX
+	sec
+	sbc     _minStackableX
+	bcc     L029B
+	beq     L029B
+;
+; minStackableX = blockTileX;
+;
+	.dbg	line, "src/gamePhase.h", 175
+	lda     _blockTileX
+	sta     _minStackableX
+;
+; oam_clear();
+;
+	.dbg	line, "src/gamePhase.h", 179
+L029B:	jsr     _oam_clear
 ;
 ; blockCount -= j;
 ;
-	.dbg	line, "src/gamePhase.h", 179
-L0284:	lda     _j
+	.dbg	line, "src/gamePhase.h", 180
+	lda     _j
 	eor     #$FF
 	sec
 	adc     _blockCount
 	sta     _blockCount
 ;
+; blockGroupWidth = BLOCK_SIZE * blockCount;
+;
+	.dbg	line, "src/gamePhase.h", 181
+	asl     a
+	asl     a
+	asl     a
+	asl     a
+	sta     _blockGroupWidth
+;
 ; if (blockCount == 0)
 ;
-	.dbg	line, "src/gamePhase.h", 204
+	.dbg	line, "src/gamePhase.h", 186
 	ldx     #$00
-L02E3:	lda     _blockCount
+L02F6:	lda     _blockCount
 ;
 ; break;
 ;
-	.dbg	line, "src/gamePhase.h", 206
-	bne     L02E9
+	.dbg	line, "src/gamePhase.h", 188
+	bne     L02FE
 ;
 ; pal_fade_to(0);
 ;
-	.dbg	line, "src/gamePhase.h", 245
+	.dbg	line, "src/gamePhase.h", 220
 	jmp     _pal_fade_to
 ;
-; i16 = NTADR_A(blockTileX << 1, (blockTileY - 1) << 1);
+; i16 = NTADR_A(minStackableX << 1, (blockTileY - 1) << 1);
 ;
-	.dbg	line, "src/gamePhase.h", 218
-L02E9:	lda     _blockTileY
+	.dbg	line, "src/gamePhase.h", 193
+L02FE:	lda     _blockTileY
 	sec
 	sbc     #$01
-	bcs     L029F
+	bcs     L02AD
 	dex
-L029F:	stx     tmp1
+L02AD:	stx     tmp1
 	asl     a
 	rol     tmp1
 	ldx     tmp1
@@ -1200,11 +1258,11 @@ L029F:	stx     tmp1
 	rol     tmp1
 	sta     ptr1
 	ldx     #$00
-	lda     _blockTileX
+	lda     _minStackableX
 	asl     a
-	bcc     L02D8
+	bcc     L02E8
 	inx
-L02D8:	ora     ptr1
+L02E8:	ora     ptr1
 	sta     _i16
 	txa
 	ora     tmp1
@@ -1213,47 +1271,47 @@ L02D8:	ora     ptr1
 ;
 ; updateList[0] = MSB(i16) | NT_UPD_HORZ;
 ;
-	.dbg	line, "src/gamePhase.h", 219
+	.dbg	line, "src/gamePhase.h", 194
 	ora     #$40
 	sta     _updateList
 ;
 ; updateList[1] = LSB(i16);
 ;
-	.dbg	line, "src/gamePhase.h", 220
+	.dbg	line, "src/gamePhase.h", 195
 	lda     _i16
 	sta     _updateList+1
 ;
 ; i16 += 32;
 ;
-	.dbg	line, "src/gamePhase.h", 221
+	.dbg	line, "src/gamePhase.h", 196
 	lda     #$20
 	clc
 	adc     _i16
 	sta     _i16
-	bcc     L02AF
+	bcc     L02BD
 	inc     _i16+1
 ;
 ; updateList[11] = MSB(i16) | NT_UPD_HORZ;
 ;
-	.dbg	line, "src/gamePhase.h", 222
-L02AF:	lda     _i16+1
+	.dbg	line, "src/gamePhase.h", 197
+L02BD:	lda     _i16+1
 	ora     #$40
 	sta     _updateList+11
 ;
 ; updateList[12] = LSB(i16);
 ;
-	.dbg	line, "src/gamePhase.h", 223
+	.dbg	line, "src/gamePhase.h", 198
 	lda     _i16
 	sta     _updateList+12
 ;
 ; ++stackHeight;
 ;
-	.dbg	line, "src/gamePhase.h", 226
+	.dbg	line, "src/gamePhase.h", 201
 	inc     _stackHeight
 ;
 ; if (stackHeight >= WIN_STACK_HEIGHT)
 ;
-	.dbg	line, "src/gamePhase.h", 227
+	.dbg	line, "src/gamePhase.h", 202
 	lda     _stackHeight
 	cmp     #$0A
 	lda     #$00
@@ -1261,29 +1319,29 @@ L02AF:	lda     _i16+1
 ;
 ; break;
 ;
-	.dbg	line, "src/gamePhase.h", 229
-	bcs     L02E5
+	.dbg	line, "src/gamePhase.h", 204
+	bcs     L02F8
 ;
 ; blockX = CENTER_X << FP_BITS;
 ;
-	.dbg	line, "src/gamePhase.h", 235
+	.dbg	line, "src/gamePhase.h", 210
 	ldx     #$08
 	sta     _blockX
 	stx     _blockX+1
 ;
 ; blockTileX = CENTER_X >> TILE_SIZE_BIT;
 ;
-	.dbg	line, "src/gamePhase.h", 236
+	.dbg	line, "src/gamePhase.h", 211
 	stx     _blockTileX
 ;
 ; blockTileY -= 1;
 ;
-	.dbg	line, "src/gamePhase.h", 237
+	.dbg	line, "src/gamePhase.h", 212
 	dec     _blockTileY
 ;
 ; blockSpeed += INCREMENT_SPEED;
 ;
-	.dbg	line, "src/gamePhase.h", 240
+	.dbg	line, "src/gamePhase.h", 215
 	lda     #$00
 	clc
 	adc     _blockSpeed
@@ -1292,12 +1350,12 @@ L02AF:	lda     _i16+1
 ; while (1)
 ;
 	.dbg	line, "src/gamePhase.h", 101
-	jmp     L02DC
+	jmp     L02EE
 ;
 ; pal_fade_to(0);
 ;
-	.dbg	line, "src/gamePhase.h", 245
-L02E5:	jmp     _pal_fade_to
+	.dbg	line, "src/gamePhase.h", 220
+L02F8:	jmp     _pal_fade_to
 	.dbg	line
 
 .endproc
@@ -1318,7 +1376,7 @@ L02E5:	jmp     _pal_fade_to
 ; titlePhase();
 ;
 	.dbg	line, "src\main.c", 92
-L02CA:	jsr     _titlePhase
+L02D8:	jsr     _titlePhase
 ;
 ; pal_fade_to(0);
 ;
@@ -1335,7 +1393,7 @@ L02CA:	jsr     _titlePhase
 ; while (1) // Infinite loop
 ;
 	.dbg	line, "src\main.c", 90
-	jmp     L02CA
+	jmp     L02D8
 	.dbg	line
 
 .endproc
