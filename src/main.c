@@ -3,7 +3,7 @@
 *  @brief      	Main game code file
 *  @author     	Lori
 *  @created 	November 26, 2017
-*  @modified   	November 26, 2017
+*  @modified   	November 27, 2017
 *      
 *  @par [explanation]
 *		> Used for global variable declarations, defines, and other
@@ -12,16 +12,6 @@
  
 #include "lib/neslib.h"
 
-// Game uses 12:4 fixed point calculations
-#define FP_BITS	4
-
-// Movement directions, mapped to gamepad button bits
-#define DIR_NONE		0
-#define DIR_LEFT		PAD_LEFT
-#define DIR_RIGHT		PAD_RIGHT
-#define DIR_UP			PAD_UP
-#define DIR_DOWN		PAD_DOWN
-
 // Put all the subsequent global vars into zeropage
 
 #pragma bss-name (push,"ZEROPAGE")
@@ -29,23 +19,12 @@
 
 // Set of general purpose global vars that are used everywhere in the program
 // This makes code faster and shorter, although not very convenient and readable
-static unsigned char i;
-static unsigned char j;
-/*
-static unsigned char frameCounter;
-static unsigned char input;
-static unsigned char wait;
-
-static unsigned char px;
-static unsigned char py;
-static unsigned char ptr;
-static unsigned char spr;
-*/
-static unsigned int i16;
-
-// Used in fade functions (pal_fade_to, game loop fade)
-static unsigned char bright;
-
+static unsigned char i;				// Looping variable
+static unsigned char j;				// Looping variable
+static unsigned char frameCounter;	// Tracks elapsed frames
+static unsigned char gameResult;	// Tracks game result
+static unsigned int var16Bit;		// General variable for 16-bit computations
+static unsigned char bright;		// Used in fade functions (pal_fade_to
 
 #pragma data-name(pop)
 #pragma bss-name (pop)
@@ -83,16 +62,16 @@ void pal_fade_to(unsigned to)
 #include "gameConstants.h"
 #include "titlePhase.h"
 #include "gamePhase.h"
+#include "resultPhase.h"
 
 // Program entry-point
 void main(void)
 {
-	while (1) // Infinite loop
+	 // Game loop
+	while (1)
 	{
 		titlePhase();
-		
-		pal_fade_to(0);
-		
-		gamePhase();
+		gamePhase();		
+		resultPhase();
 	}
 }

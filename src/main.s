@@ -10,17 +10,20 @@
 	.importzp	sp, sreg, regsave, regbank
 	.importzp	tmp1, tmp2, tmp3, tmp4, ptr1, ptr2, ptr3, ptr4
 	.macpack	longbranch
-	.dbg		file, "src\main.c", 2253, 1511748307
+	.dbg		file, "src\main.c", 2021, 1511789777
 	.dbg		file, "src/lib/neslib.h", 8355, 1511504897
 	.dbg		file, "src/soundsAndMusic/soundsAndMusic.h", 735, 1511504897
-	.dbg		file, "src/gameConstants.h", 400, 1511616772
-	.dbg		file, "src/titlePhase.h", 758, 1511707300
-	.dbg		file, "src/nametables/title.h", 1585, 1511702491
-	.dbg		file, "src/gamePhase.h", 5505, 1511767798
-	.dbg		file, "src/nametables/game.h", 622, 1511749442
+	.dbg		file, "src/gameConstants.h", 587, 1511789743
+	.dbg		file, "src/titlePhase.h", 1052, 1511789773
+	.dbg		file, "src/nametables/title.h", 1589, 1511778076
+	.dbg		file, "src/gamePhase.h", 6916, 1511789768
+	.dbg		file, "src/nametables/game.h", 594, 1511786241
+	.dbg		file, "src/resultPhase.h", 2388, 1511789230
+	.dbg		file, "src/nametables/hud.h", 351, 1511781635
 	.forceimport	__STARTUP__
 	.dbg		sym, "pal_bg", "00", extern, "_pal_bg"
 	.dbg		sym, "pal_spr", "00", extern, "_pal_spr"
+	.dbg		sym, "pal_col", "00", extern, "_pal_col"
 	.dbg		sym, "pal_bright", "00", extern, "_pal_bright"
 	.dbg		sym, "ppu_wait_frame", "00", extern, "_ppu_wait_frame"
 	.dbg		sym, "ppu_off", "00", extern, "_ppu_off"
@@ -28,16 +31,22 @@
 	.dbg		sym, "ppu_on_bg", "00", extern, "_ppu_on_bg"
 	.dbg		sym, "oam_clear", "00", extern, "_oam_clear"
 	.dbg		sym, "oam_meta_spr", "00", extern, "_oam_meta_spr"
+	.dbg		sym, "music_play", "00", extern, "_music_play"
 	.dbg		sym, "music_stop", "00", extern, "_music_stop"
 	.dbg		sym, "pad_trigger", "00", extern, "_pad_trigger"
 	.dbg		sym, "scroll", "00", extern, "_scroll"
+	.dbg		sym, "bank_bg", "00", extern, "_bank_bg"
+	.dbg		sym, "rand8", "00", extern, "_rand8"
+	.dbg		sym, "set_rand", "00", extern, "_set_rand"
 	.dbg		sym, "set_vram_update", "00", extern, "_set_vram_update"
 	.dbg		sym, "vram_adr", "00", extern, "_vram_adr"
+	.dbg		sym, "vram_write", "00", extern, "_vram_write"
 	.dbg		sym, "vram_unrle", "00", extern, "_vram_unrle"
 	.dbg		sym, "memcpy", "00", extern, "_memcpy"
 	.dbg		sym, "delay", "00", extern, "_delay"
 	.import		_pal_bg
 	.import		_pal_spr
+	.import		_pal_col
 	.import		_pal_bright
 	.import		_ppu_wait_frame
 	.import		_ppu_off
@@ -45,22 +54,31 @@
 	.import		_ppu_on_bg
 	.import		_oam_clear
 	.import		_oam_meta_spr
+	.import		_music_play
 	.import		_music_stop
 	.import		_pad_trigger
 	.import		_scroll
+	.import		_bank_bg
+	.import		_rand8
+	.import		_set_rand
 	.import		_set_vram_update
 	.import		_vram_adr
+	.import		_vram_write
 	.import		_vram_unrle
 	.import		_memcpy
 	.import		_delay
 	.export		_palette
 	.export		_pal_fade_to
-	.export		_title
+	.export		_title_nam
 	.export		_titlePhase
-	.export		_game
+	.export		_game_nam
 	.export		_block_metasprite
 	.export		_updateListData
 	.export		_gamePhase
+	.export		_fail_nam1
+	.export		_fail_nam2
+	.export		_fail_nam3
+	.export		_resultPhase
 	.export		_main
 
 .segment	"DATA"
@@ -87,7 +105,7 @@ _palette:
 	.byte	$16
 	.byte	$27
 	.byte	$37
-_title:
+_title_nam:
 	.byte	$01
 	.byte	$00
 	.byte	$01
@@ -390,7 +408,7 @@ _title:
 	.byte	$00
 	.byte	$01
 	.byte	$00
-_game:
+_game_nam:
 	.byte	$02
 	.byte	$00
 	.byte	$02
@@ -399,20 +417,6 @@ _game:
 	.byte	$4E
 	.byte	$49
 	.byte	$4A
-	.byte	$00
-	.byte	$02
-	.byte	$13
-	.byte	$49
-	.byte	$4A
-	.byte	$4D
-	.byte	$4E
-	.byte	$00
-	.byte	$02
-	.byte	$03
-	.byte	$4F
-	.byte	$50
-	.byte	$4B
-	.byte	$4C
 	.byte	$00
 	.byte	$02
 	.byte	$06
@@ -425,25 +429,33 @@ _game:
 	.byte	$00
 	.byte	$02
 	.byte	$06
+	.byte	$49
+	.byte	$4A
+	.byte	$4D
+	.byte	$4E
+	.byte	$00
+	.byte	$02
+	.byte	$03
+	.byte	$4F
+	.byte	$50
+	.byte	$4B
+	.byte	$4C
+	.byte	$0D
+	.byte	$02
+	.byte	$13
 	.byte	$4B
 	.byte	$4C
 	.byte	$4F
 	.byte	$50
 	.byte	$00
 	.byte	$02
-	.byte	$03
-	.byte	$0D
-	.byte	$02
-	.byte	$1B
-	.byte	$00
-	.byte	$02
 	.byte	$FE
 	.byte	$00
 	.byte	$02
 	.byte	$FE
 	.byte	$00
 	.byte	$02
-	.byte	$65
+	.byte	$85
 	.byte	$44
 	.byte	$02
 	.byte	$1B
@@ -468,11 +480,11 @@ _game:
 	.byte	$00
 	.byte	$02
 	.byte	$09
-	.byte	$88
-	.byte	$AA
+	.byte	$48
+	.byte	$5A
 	.byte	$02
 	.byte	$05
-	.byte	$22
+	.byte	$12
 	.byte	$44
 	.byte	$55
 	.byte	$02
@@ -547,6 +559,51 @@ _updateListData:
 	.byte	$42
 	.byte	$43
 	.byte	$FF
+_fail_nam1:
+	.byte	$63
+	.byte	$68
+	.byte	$60
+	.byte	$62
+	.byte	$60
+	.byte	$62
+	.byte	$60
+	.byte	$62
+	.byte	$60
+	.byte	$62
+	.byte	$60
+	.byte	$62
+	.byte	$97
+	.byte	$97
+_fail_nam2:
+	.byte	$84
+	.byte	$85
+	.byte	$67
+	.byte	$68
+	.byte	$67
+	.byte	$68
+	.byte	$67
+	.byte	$68
+	.byte	$67
+	.byte	$68
+	.byte	$67
+	.byte	$68
+	.byte	$98
+	.byte	$98
+_fail_nam3:
+	.byte	$67
+	.byte	$68
+	.byte	$6F
+	.byte	$74
+	.byte	$6F
+	.byte	$74
+	.byte	$6F
+	.byte	$74
+	.byte	$6F
+	.byte	$74
+	.byte	$6F
+	.byte	$74
+	.byte	$99
+	.byte	$99
 
 .segment	"BSS"
 
@@ -555,32 +612,34 @@ _i:
 	.res	1,$00
 _j:
 	.res	1,$00
-_i16:
+_frameCounter:
+	.res	1,$00
+_gameResult:
+	.res	1,$00
+_var16Bit:
 	.res	2,$00
 _bright:
 	.res	1,$00
 .segment	"BSS"
 _updateList:
 	.res	23,$00
-_blockX:
+_blockPosX:
 	.res	2,$00
-_blockTileX:
+_blockCoordX:
 	.res	1,$00
-_blockTileY:
+_blockCoordY:
 	.res	1,$00
 _blockSpeed:
 	.res	1,$00
-_blockCount:
+_blockSize:
 	.res	1,$00
-_blockGroupWidth:
-	.res	1,$00
-_direction:
+_blockWidth:
 	.res	1,$00
 _stackHeight:
 	.res	1,$00
-_isMoving:
+_isMoveRight:
 	.res	1,$00
-_minStackableX:
+_minStackCoordX:
 	.res	1,$00
 
 ; ---------------------------------------------------------------
@@ -599,12 +658,12 @@ _minStackableX:
 ;
 ; {
 ;
-	.dbg	line, "src\main.c", 64
+	.dbg	line, "src\main.c", 43
 	jsr     pushax
 ;
 ; if (!to) music_stop();
 ;
-	.dbg	line, "src\main.c", 65
+	.dbg	line, "src\main.c", 44
 	ldy     #$01
 	lda     (sp),y
 	dey
@@ -614,18 +673,18 @@ _minStackableX:
 ;
 ; while (bright != to)
 ;
-	.dbg	line, "src\main.c", 67
+	.dbg	line, "src\main.c", 46
 	jmp     L001E
 ;
 ; delay(4);
 ;
-	.dbg	line, "src\main.c", 69
+	.dbg	line, "src\main.c", 48
 L001C:	lda     #$04
 	jsr     _delay
 ;
 ; if (bright<to)  ++bright;
 ;
-	.dbg	line, "src\main.c", 70
+	.dbg	line, "src\main.c", 49
 	ldx     #$00
 	lda     _bright
 	ldy     #$00
@@ -633,24 +692,24 @@ L001C:	lda     #$04
 	txa
 	iny
 	sbc     (sp),y
-	bcs     L02E2
+	bcs     L03C5
 	inc     _bright
 ;
 ; else    --bright;
 ;
-	.dbg	line, "src\main.c", 71
-	jmp     L02E1
-L02E2:	dec     _bright
+	.dbg	line, "src\main.c", 50
+	jmp     L03C4
+L03C5:	dec     _bright
 ;
 ; pal_bright(bright);
 ;
-	.dbg	line, "src\main.c", 72
-L02E1:	lda     _bright
+	.dbg	line, "src\main.c", 51
+L03C4:	lda     _bright
 	jsr     _pal_bright
 ;
 ; while (bright != to)
 ;
-	.dbg	line, "src\main.c", 67
+	.dbg	line, "src\main.c", 46
 L001E:	ldy     #$01
 	lda     (sp),y
 	tax
@@ -663,31 +722,31 @@ L001E:	ldy     #$01
 ;
 ; if (!bright)
 ;
-	.dbg	line, "src\main.c", 75
+	.dbg	line, "src\main.c", 54
 	lda     _bright
 	bne     L0029
 ;
 ; ppu_off();
 ;
-	.dbg	line, "src\main.c", 77
+	.dbg	line, "src\main.c", 56
 	jsr     _ppu_off
 ;
 ; set_vram_update(NULL);
 ;
-	.dbg	line, "src\main.c", 78
+	.dbg	line, "src\main.c", 57
 	ldx     #$00
 	txa
 	jsr     _set_vram_update
 ;
 ; scroll(0,0);
 ;
-	.dbg	line, "src\main.c", 79
+	.dbg	line, "src\main.c", 58
 	jsr     push0
 	jsr     _scroll
 ;
 ; }
 ;
-	.dbg	line, "src\main.c", 81
+	.dbg	line, "src\main.c", 60
 L0029:	jmp     incsp2
 	.dbg	line
 
@@ -713,11 +772,11 @@ L0029:	jmp     incsp2
 	lda     #$00
 	jsr     _vram_adr
 ;
-; vram_unrle(title);
+; vram_unrle(title_nam);
 ;
 	.dbg	line, "src/titlePhase.h", 19
-	lda     #<(_title)
-	ldx     #>(_title)
+	lda     #<(_title_nam)
+	ldx     #>(_title_nam)
 	jsr     _vram_unrle
 ;
 ; pal_bg(palette);
@@ -732,17 +791,76 @@ L0029:	jmp     incsp2
 	.dbg	line, "src/titlePhase.h", 25
 	jsr     _ppu_on_bg
 ;
-; if (pad_trigger(0))
+; ppu_wait_frame();
+;
+	.dbg	line, "src/titlePhase.h", 29
+L0168:	jsr     _ppu_wait_frame
+;
+; ++frameCounter;
 ;
 	.dbg	line, "src/titlePhase.h", 30
+	inc     _frameCounter
+;
+; pal_col(12, (frameCounter & 16) ? 0x0f : 0x0f);
+;
+	.dbg	line, "src/titlePhase.h", 33
+	lda     #$0C
+	jsr     pusha
+	lda     _frameCounter
+	and     #$10
+	lda     #$0F
+	jsr     _pal_col
+;
+; pal_col(13, (frameCounter & 16) ? 0x16 : 0x15);
+;
+	.dbg	line, "src/titlePhase.h", 34
+	lda     #$0D
+	jsr     pusha
+	lda     _frameCounter
+	and     #$10
+	beq     L03C7
+	lda     #$16
+	jmp     L03C8
+L03C7:	lda     #$15
+L03C8:	jsr     _pal_col
+;
+; pal_col(14, (frameCounter & 16) ? 0x27 : 0x25);
+;
+	.dbg	line, "src/titlePhase.h", 35
+	lda     #$0E
+	jsr     pusha
+	lda     _frameCounter
+	and     #$10
+	beq     L03C9
+	lda     #$27
+	jmp     L03CA
+L03C9:	lda     #$25
+L03CA:	jsr     _pal_col
+;
+; pal_col(15, (frameCounter & 16) ? 0x37 : 0x35);
+;
+	.dbg	line, "src/titlePhase.h", 36
+	lda     #$0F
+	jsr     pusha
+	lda     _frameCounter
+	and     #$10
+	beq     L03CB
+	lda     #$37
+	jmp     L03CC
+L03CB:	lda     #$35
+L03CC:	jsr     _pal_col
+;
+; if (pad_trigger(0))
+;
+	.dbg	line, "src/titlePhase.h", 39
 	lda     #$00
-L02E3:	jsr     _pad_trigger
+	jsr     _pad_trigger
 	tax
-	beq     L02E3
+	beq     L0168
 ;
 ; pal_fade_to(0);
 ;
-	.dbg	line, "src/titlePhase.h", 37
+	.dbg	line, "src/titlePhase.h", 46
 	ldx     #$00
 	txa
 	jmp     _pal_fade_to
@@ -763,116 +881,124 @@ L02E3:	jsr     _pad_trigger
 .segment	"CODE"
 
 ;
+; set_rand(frameCounter);
+;
+	.dbg	line, "src/gamePhase.h", 73
+	lda     _frameCounter
+	ldx     #$00
+	jsr     _set_rand
+;
 ; oam_clear();
 ;
-	.dbg	line, "src/gamePhase.h", 71
+	.dbg	line, "src/gamePhase.h", 76
 	jsr     _oam_clear
 ;
 ; vram_adr(NAMETABLE_A);
 ;
-	.dbg	line, "src/gamePhase.h", 74
+	.dbg	line, "src/gamePhase.h", 79
 	ldx     #$20
 	lda     #$00
 	jsr     _vram_adr
 ;
-; vram_unrle(game);
+; vram_unrle(game_nam);
 ;
-	.dbg	line, "src/gamePhase.h", 75
-	lda     #<(_game)
-	ldx     #>(_game)
+	.dbg	line, "src/gamePhase.h", 80
+	lda     #<(_game_nam)
+	ldx     #>(_game_nam)
 	jsr     _vram_unrle
 ;
 ; pal_bg(palette);
 ;
-	.dbg	line, "src/gamePhase.h", 78
+	.dbg	line, "src/gamePhase.h", 83
 	lda     #<(_palette)
 	ldx     #>(_palette)
 	jsr     _pal_bg
 ;
 ; pal_spr(palette);
 ;
-	.dbg	line, "src/gamePhase.h", 79
+	.dbg	line, "src/gamePhase.h", 84
 	lda     #<(_palette)
 	ldx     #>(_palette)
 	jsr     _pal_spr
 ;
 ; pal_bright(4);
 ;
-	.dbg	line, "src/gamePhase.h", 82
+	.dbg	line, "src/gamePhase.h", 87
 	lda     #$04
 	jsr     _pal_bright
 ;
 ; ppu_on_all();
 ;
-	.dbg	line, "src/gamePhase.h", 83
+	.dbg	line, "src/gamePhase.h", 88
 	jsr     _ppu_on_all
 ;
-; blockX = CENTER_X << FP_BITS;
+; gameResult = 0;
 ;
-	.dbg	line, "src/gamePhase.h", 86
-	ldx     #$08
+	.dbg	line, "src/gamePhase.h", 91
 	lda     #$00
-	sta     _blockX
-	stx     _blockX+1
-;
-; blockTileX = CENTER_X >> TILE_SIZE_BIT;
-;
-	.dbg	line, "src/gamePhase.h", 87
-	stx     _blockTileX
-;
-; blockTileY = BASE_Y >> TILE_SIZE_BIT;
-;
-	.dbg	line, "src/gamePhase.h", 88
-	lda     #$0D
-	sta     _blockTileY
+	sta     _gameResult
 ;
 ; blockSpeed = INIT_SPEED;
 ;
-	.dbg	line, "src/gamePhase.h", 89
-	lda     #$10
+	.dbg	line, "src/gamePhase.h", 92
+	lda     #$18
 	sta     _blockSpeed
 ;
-; blockCount = INIT_BLOCK_COUNT;
+; blockSize = INIT_BLOCK_SIZE;
 ;
-	.dbg	line, "src/gamePhase.h", 90
+	.dbg	line, "src/gamePhase.h", 93
 	lda     #$04
-	sta     _blockCount
+	sta     _blockSize
 ;
-; blockGroupWidth = BLOCK_SIZE * blockCount;
+; blockWidth = BLOCK_SIDE * blockSize;
 ;
-	.dbg	line, "src/gamePhase.h", 91
+	.dbg	line, "src/gamePhase.h", 94
 	asl     a
 	asl     a
 	asl     a
 	asl     a
-	sta     _blockGroupWidth
+	sta     _blockWidth
 ;
-; direction = 1;
+; blockPosX = CENTER_X << FP_BITS;
 ;
-	.dbg	line, "src/gamePhase.h", 92
-	lda     #$01
-	sta     _direction
+	.dbg	line, "src/gamePhase.h", 95
+	ldx     #$07
+	lda     #$00
+	sta     _blockPosX
+	stx     _blockPosX+1
+;
+; blockCoordX = CENTER_X >> TILE_SIZE_BIT;
+;
+	.dbg	line, "src/gamePhase.h", 96
+	stx     _blockCoordX
+;
+; blockCoordY = BASE_Y >> TILE_SIZE_BIT;
+;
+	.dbg	line, "src/gamePhase.h", 97
+	lda     #$0D
+	sta     _blockCoordY
 ;
 ; stackHeight = 0;
 ;
-	.dbg	line, "src/gamePhase.h", 93
+	.dbg	line, "src/gamePhase.h", 98
 	lda     #$00
 	sta     _stackHeight
 ;
-; minStackableX = 0;
+; isMoveRight = 1;
 ;
-	.dbg	line, "src/gamePhase.h", 94
-	sta     _minStackableX
-;
-; isMoving = 1;
-;
-	.dbg	line, "src/gamePhase.h", 95
+	.dbg	line, "src/gamePhase.h", 99
 	lda     #$01
-	sta     _isMoving
+	sta     _isMoveRight
+;
+; minStackCoordX = 0;
+;
+	.dbg	line, "src/gamePhase.h", 100
+	lda     #$00
+	sta     _minStackCoordX
 ;
 ; memcpy(updateList, updateListData, sizeof(updateListData));
 ;
-	.dbg	line, "src/gamePhase.h", 98
+	.dbg	line, "src/gamePhase.h", 103
 	lda     #<(_updateList)
 	ldx     #>(_updateList)
 	jsr     pushax
@@ -885,25 +1011,31 @@ L02E3:	jsr     _pad_trigger
 ;
 ; set_vram_update(updateList);
 ;
-	.dbg	line, "src/gamePhase.h", 99
+	.dbg	line, "src/gamePhase.h", 104
 	lda     #<(_updateList)
 	ldx     #>(_updateList)
 	jsr     _set_vram_update
 ;
-; for (i = 0; i < blockCount; ++i)
+; music_play(MUSIC_GAME);
 ;
-	.dbg	line, "src/gamePhase.h", 104
-L02EE:	lda     #$00
-L02EF:	sta     _i
-L02F0:	lda     _i
-	cmp     _blockCount
-	bcs     L0247
+	.dbg	line, "src/gamePhase.h", 107
+	lda     #$01
+	jsr     _music_play
 ;
-; oam_meta_spr((blockTileX + i) << TILE_SIZE_BIT,
+; for (i = 0; i < blockSize; ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 106
+	.dbg	line, "src/gamePhase.h", 112
+L03DA:	lda     #$00
+L03DB:	sta     _i
+L03DC:	lda     _i
+	cmp     _blockSize
+	bcs     L0269
+;
+; oam_meta_spr((blockCoordX + i) << TILE_SIZE_BIT,
+;
+	.dbg	line, "src/gamePhase.h", 114
 	jsr     decsp3
-	lda     _blockTileX
+	lda     _blockCoordX
 	clc
 	adc     _i
 	asl     a
@@ -913,10 +1045,10 @@ L02F0:	lda     _i
 	ldy     #$02
 	sta     (sp),y
 ;
-; blockTileY << TILE_SIZE_BIT,
+; blockCoordY << TILE_SIZE_BIT,
 ;
-	.dbg	line, "src/gamePhase.h", 107
-	lda     _blockTileY
+	.dbg	line, "src/gamePhase.h", 115
+	lda     _blockCoordY
 	asl     a
 	asl     a
 	asl     a
@@ -926,7 +1058,7 @@ L02F0:	lda     _i
 ;
 ; i << 4,
 ;
-	.dbg	line, "src/gamePhase.h", 108
+	.dbg	line, "src/gamePhase.h", 116
 	lda     _i
 	asl     a
 	asl     a
@@ -937,205 +1069,227 @@ L02F0:	lda     _i
 ;
 ; block_metasprite);
 ;
-	.dbg	line, "src/gamePhase.h", 109
+	.dbg	line, "src/gamePhase.h", 117
 	lda     #<(_block_metasprite)
 	ldx     #>(_block_metasprite)
 	jsr     _oam_meta_spr
 ;
-; for (i = 0; i < blockCount; ++i)
+; for (i = 0; i < blockSize; ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 104
+	.dbg	line, "src/gamePhase.h", 112
 	inc     _i
-	jmp     L02F0
+	jmp     L03DC
 ;
 ; ppu_wait_frame();
 ;
-	.dbg	line, "src/gamePhase.h", 113
-L0247:	jsr     _ppu_wait_frame
-;
-; if (isMoving)
-;
-	.dbg	line, "src/gamePhase.h", 116
-	lda     _isMoving
-	beq     L0255
-;
-; if (direction)
-;
-	.dbg	line, "src/gamePhase.h", 119
-	lda     _direction
-	beq     L0257
-;
-; blockX += blockSpeed;
-;
 	.dbg	line, "src/gamePhase.h", 121
+L0269:	jsr     _ppu_wait_frame
+;
+; ++frameCounter;
+;
+	.dbg	line, "src/gamePhase.h", 122
+	inc     _frameCounter
+;
+; bank_bg((frameCounter >> 4)&1);
+;
+	.dbg	line, "src/gamePhase.h", 125
+	lda     _frameCounter
+	lsr     a
+	lsr     a
+	lsr     a
+	lsr     a
+	and     #$01
+	jsr     _bank_bg
+;
+; if (isMoveRight)
+;
+	.dbg	line, "src/gamePhase.h", 128
+	lda     _isMoveRight
+	beq     L027B
+;
+; blockPosX += blockSpeed;
+;
+	.dbg	line, "src/gamePhase.h", 130
 	lda     _blockSpeed
 	clc
-	adc     _blockX
-	sta     _blockX
+	adc     _blockPosX
+	sta     _blockPosX
 	lda     #$00
 ;
 ; else
 ;
-	.dbg	line, "src/gamePhase.h", 123
-	jmp     L02FC
+	.dbg	line, "src/gamePhase.h", 132
+	jmp     L03ED
 ;
-; blockX -= blockSpeed;
+; blockPosX -= blockSpeed;
 ;
-	.dbg	line, "src/gamePhase.h", 125
-L0257:	lda     _blockSpeed
+	.dbg	line, "src/gamePhase.h", 134
+L027B:	lda     _blockSpeed
 	eor     #$FF
 	sec
-	adc     _blockX
-	sta     _blockX
+	adc     _blockPosX
+	sta     _blockPosX
 	lda     #$FF
-L02FC:	adc     _blockX+1
-	sta     _blockX+1
+L03ED:	adc     _blockPosX+1
+	sta     _blockPosX+1
 ;
-; blockTileX = blockX >> TILE_PLUS_FP_BITS;
+; blockCoordX = blockPosX >> TILE_PLUS_FP_BITS;
 ;
-	.dbg	line, "src/gamePhase.h", 129
-L0255:	lda     _blockX+1
-	sta     _blockTileX
+	.dbg	line, "src/gamePhase.h", 139
+	sta     _blockCoordX
 ;
-; if ((((blockX & 0x00f0) >> FP_BITS)) >= 8)
+; if ((((blockPosX & 0x00f0) >> FP_BITS)) >= 8)
 ;
-	.dbg	line, "src/gamePhase.h", 130
-	lda     _blockX
+	.dbg	line, "src/gamePhase.h", 141
+	lda     _blockPosX
 	and     #$F0
 	lsr     a
 	lsr     a
 	lsr     a
 	lsr     a
 	cmp     #$08
-	bcc     L0261
+	bcc     L0285
 ;
-; blockTileX += 1;
+; blockCoordX += 1;
 ;
-	.dbg	line, "src/gamePhase.h", 132
-	inc     _blockTileX
+	.dbg	line, "src/gamePhase.h", 143
+	inc     _blockCoordX
 ;
-; if ((blockX >> FP_BITS) <= SCREEN_MIN ||
+; if ((blockPosX >> FP_BITS) <= SCREEN_MIN ||
 ;
-	.dbg	line, "src/gamePhase.h", 136
-L0261:	lda     _blockX
-	ldx     _blockX+1
+	.dbg	line, "src/gamePhase.h", 147
+L0285:	lda     _blockPosX
+	ldx     _blockPosX+1
 	jsr     shrax4
 	cpx     #$00
-	bne     L026B
+	bne     L028F
 	cmp     #$11
-L026B:	bcc     L0269
+L028F:	bcc     L028D
 ;
-; (blockX >> FP_BITS) >=
+; (blockPosX >> FP_BITS) >= (SCREEN_MAX - blockWidth))
 ;
-	.dbg	line, "src/gamePhase.h", 137
-	lda     _blockX
-	ldx     _blockX+1
+	.dbg	line, "src/gamePhase.h", 148
+	lda     _blockPosX
+	ldx     _blockPosX+1
 	jsr     shrax4
-;
-; ((SCREEN_MAX - blockGroupWidth)))
-;
-	.dbg	line, "src/gamePhase.h", 138
 	jsr     pushax
 	lda     #$F0
 	sec
-	sbc     _blockGroupWidth
+	sbc     _blockWidth
 	jsr     tosicmp0
-	bcc     L02FA
+	bcc     L03EB
 ;
-; direction ^= 1;
+; isMoveRight ^= 1;
 ;
-	.dbg	line, "src/gamePhase.h", 141
-L0269:	lda     _direction
+	.dbg	line, "src/gamePhase.h", 151
+L028D:	lda     _isMoveRight
 	eor     #$01
-	sta     _direction
+	sta     _isMoveRight
 ;
 ; if (pad_trigger(0))
 ;
-	.dbg	line, "src/gamePhase.h", 145
-L02FA:	lda     #$00
+	.dbg	line, "src/gamePhase.h", 155
+L03EB:	lda     #$00
 	jsr     _pad_trigger
 	tax
-	jeq     L02EF
+	jeq     L03DB
 ;
 ; if (stackHeight < 1)
 ;
-	.dbg	line, "src/gamePhase.h", 149
+	.dbg	line, "src/gamePhase.h", 158
 	ldx     #$00
 	lda     _stackHeight
-	bne     L02F2
+	bne     L03DE
 ;
-; minStackableX = blockTileX;
+; minStackCoordX = blockCoordX;
 ;
-	.dbg	line, "src/gamePhase.h", 151
-	lda     _blockTileX
-	sta     _minStackableX
+	.dbg	line, "src/gamePhase.h", 160
+	lda     _blockCoordX
+	sta     _minStackCoordX
 ;
-; if (blockTileX != minStackableX)
+; if (blockCoordX != minStackCoordX)
 ;
-	.dbg	line, "src/gamePhase.h", 155
-L02F2:	lda     _minStackableX
-	cmp     _blockTileX
-	jeq     L02F6
+	.dbg	line, "src/gamePhase.h", 166
+L03DE:	lda     _minStackCoordX
+	cmp     _blockCoordX
+	jeq     L03E6
 ;
-; j = (blockTileX < minStackableX) ? (minStackableX - blockTileX)
+; oam_clear();
 ;
-	.dbg	line, "src/gamePhase.h", 157
-	lda     _blockTileX
-	cmp     _minStackableX
-	bcs     L02F3
-	lda     _minStackableX
+	.dbg	line, "src/gamePhase.h", 169
+	jsr     _oam_clear
+;
+; j = (blockCoordX < minStackCoordX) ?
+;
+	.dbg	line, "src/gamePhase.h", 172
+	ldx     #$00
+	lda     _blockCoordX
+	cmp     _minStackCoordX
+;
+; (minStackCoordX - blockCoordX): // Extra blocks to the left
+;
+	.dbg	line, "src/gamePhase.h", 173
+	bcs     L03DF
+	lda     _minStackCoordX
 	sec
-	sbc     _blockTileX
+	sbc     _blockCoordX
 ;
-; : (blockTileX - minStackableX);
+; (blockCoordX - minStackCoordX); // Extra blocks to the right
 ;
-	.dbg	line, "src/gamePhase.h", 158
-	jmp     L02FD
-L02F3:	lda     _blockTileX
+	.dbg	line, "src/gamePhase.h", 174
+	jmp     L03EE
+L03DF:	lda     _blockCoordX
 	sec
-	sbc     _minStackableX
-L02FD:	sta     _j
+	sbc     _minStackCoordX
+L03EE:	sta     _j
 ;
-; if (j > blockCount)
+; if (j > blockSize)
 ;
-	.dbg	line, "src/gamePhase.h", 159
+	.dbg	line, "src/gamePhase.h", 175
 	sec
-	sbc     _blockCount
-	bcc     L02F4
-	beq     L02F4
+	sbc     _blockSize
+	bcc     L03E0
+	beq     L03E0
 ;
-; j = blockCount;
+; j = blockSize;
 ;
-	.dbg	line, "src/gamePhase.h", 161
-	lda     _blockCount
+	.dbg	line, "src/gamePhase.h", 177
+	lda     _blockSize
 	sta     _j
+;
+; if (blockSize != j)
+;
+	.dbg	line, "src/gamePhase.h", 182
+L03E0:	lda     _j
+	cmp     _blockSize
+	beq     L03E2
 ;
 ; for (i = 0; i < (j << 1); ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 165
-L02F4:	stx     _i
-L02F5:	lda     _i
+	.dbg	line, "src/gamePhase.h", 186
+	stx     _i
+L03E1:	lda     _i
 	jsr     pusha0
 	lda     _j
 	asl     a
-	bcc     L02E5
+	bcc     L03CE
 	ldx     #$01
-L02E5:	jsr     tosicmp
-	bcs     L0289
+L03CE:	jsr     tosicmp
+	bcs     L02B0
 ;
-; updateList[2 + (blockCount << 1) - i] = 0x00;
+; updateList[2 + (blockSize << 1) - i] = TILE_EMPTY;
 ;
-	.dbg	line, "src/gamePhase.h", 167
+	.dbg	line, "src/gamePhase.h", 188
 	ldx     #$00
-	lda     _blockCount
+	lda     _blockSize
 	asl     a
-	bcc     L02EC
+	bcc     L03D8
 	inx
 	clc
-L02EC:	adc     #$02
-	bcc     L0294
+L03D8:	adc     #$02
+	bcc     L02BB
 	inx
-L0294:	sec
+L02BB:	sec
 	sbc     _i
 	pha
 	txa
@@ -1152,19 +1306,19 @@ L0294:	sec
 	tay
 	sta     (ptr1),y
 ;
-; updateList[13 + (blockCount << 1) - i] = 0x00;
+; updateList[13 + (blockSize << 1) - i] = TILE_EMPTY;
 ;
-	.dbg	line, "src/gamePhase.h", 168
+	.dbg	line, "src/gamePhase.h", 189
 	tax
-	lda     _blockCount
+	lda     _blockSize
 	asl     a
-	bcc     L02ED
+	bcc     L03D9
 	inx
 	clc
-L02ED:	adc     #$0D
-	bcc     L0299
+L03D9:	adc     #$0D
+	bcc     L02C0
 	inx
-L0299:	sec
+L02C0:	sec
 	sbc     _i
 	pha
 	txa
@@ -1182,73 +1336,62 @@ L0299:	sec
 ;
 ; for (i = 0; i < (j << 1); ++i)
 ;
-	.dbg	line, "src/gamePhase.h", 165
+	.dbg	line, "src/gamePhase.h", 186
 	inc     _i
-	jmp     L02F5
+	jmp     L03E1
 ;
-; if (blockTileX > minStackableX)
+; if (blockCoordX > minStackCoordX ||
 ;
-	.dbg	line, "src/gamePhase.h", 173
-L0289:	lda     _blockTileX
+	.dbg	line, "src/gamePhase.h", 194
+L02B0:	ldx     #$00
+L03E2:	lda     _blockCoordX
 	sec
-	sbc     _minStackableX
-	bcc     L029B
-	beq     L029B
+	sbc     _minStackCoordX
+	sta     tmp1
+	lda     tmp1
+	beq     L03E3
+	bcs     L03E4
 ;
-; minStackableX = blockTileX;
+; blockSize == j) // Added to show how player loses
 ;
-	.dbg	line, "src/gamePhase.h", 175
-	lda     _blockTileX
-	sta     _minStackableX
+	.dbg	line, "src/gamePhase.h", 195
+L03E3:	lda     _j
+	cmp     _blockSize
+	bne     L03E5
 ;
-; oam_clear();
+; minStackCoordX = blockCoordX;
 ;
-	.dbg	line, "src/gamePhase.h", 179
-L029B:	jsr     _oam_clear
+	.dbg	line, "src/gamePhase.h", 197
+L03E4:	lda     _blockCoordX
+	sta     _minStackCoordX
 ;
-; blockCount -= j;
+; blockSize -= j;
 ;
-	.dbg	line, "src/gamePhase.h", 180
-	lda     _j
+	.dbg	line, "src/gamePhase.h", 201
+L03E5:	lda     _j
 	eor     #$FF
 	sec
-	adc     _blockCount
-	sta     _blockCount
+	adc     _blockSize
+	sta     _blockSize
 ;
-; blockGroupWidth = BLOCK_SIZE * blockCount;
+; blockWidth = BLOCK_SIDE * blockSize;
 ;
-	.dbg	line, "src/gamePhase.h", 181
+	.dbg	line, "src/gamePhase.h", 202
 	asl     a
 	asl     a
 	asl     a
 	asl     a
-	sta     _blockGroupWidth
+	sta     _blockWidth
 ;
-; if (blockCount == 0)
+; var16Bit = NTADR_A(minStackCoordX << 1, (blockCoordY - 1) << 1);
 ;
-	.dbg	line, "src/gamePhase.h", 186
-	ldx     #$00
-L02F6:	lda     _blockCount
-;
-; break;
-;
-	.dbg	line, "src/gamePhase.h", 188
-	bne     L02FE
-;
-; pal_fade_to(0);
-;
-	.dbg	line, "src/gamePhase.h", 220
-	jmp     _pal_fade_to
-;
-; i16 = NTADR_A(minStackableX << 1, (blockTileY - 1) << 1);
-;
-	.dbg	line, "src/gamePhase.h", 193
-L02FE:	lda     _blockTileY
+	.dbg	line, "src/gamePhase.h", 209
+L03E6:	lda     _blockCoordY
 	sec
 	sbc     #$01
-	bcs     L02AD
+	bcs     L02D2
 	dex
-L02AD:	stx     tmp1
+L02D2:	stx     tmp1
 	asl     a
 	rol     tmp1
 	ldx     tmp1
@@ -1258,104 +1401,448 @@ L02AD:	stx     tmp1
 	rol     tmp1
 	sta     ptr1
 	ldx     #$00
-	lda     _minStackableX
+	lda     _minStackCoordX
 	asl     a
-	bcc     L02E8
+	bcc     L03D1
 	inx
-L02E8:	ora     ptr1
-	sta     _i16
+L03D1:	ora     ptr1
+	sta     _var16Bit
 	txa
 	ora     tmp1
 	ora     #$20
-	sta     _i16+1
+	sta     _var16Bit+1
 ;
-; updateList[0] = MSB(i16) | NT_UPD_HORZ;
+; updateList[0] = MSB(var16Bit) | NT_UPD_HORZ;
 ;
-	.dbg	line, "src/gamePhase.h", 194
+	.dbg	line, "src/gamePhase.h", 210
 	ora     #$40
 	sta     _updateList
 ;
-; updateList[1] = LSB(i16);
+; updateList[1] = LSB(var16Bit);
 ;
-	.dbg	line, "src/gamePhase.h", 195
-	lda     _i16
+	.dbg	line, "src/gamePhase.h", 211
+	lda     _var16Bit
 	sta     _updateList+1
 ;
-; i16 += 32;
+; var16Bit += 32;
 ;
-	.dbg	line, "src/gamePhase.h", 196
+	.dbg	line, "src/gamePhase.h", 212
 	lda     #$20
 	clc
-	adc     _i16
-	sta     _i16
-	bcc     L02BD
-	inc     _i16+1
+	adc     _var16Bit
+	sta     _var16Bit
+	bcc     L02E2
+	inc     _var16Bit+1
 ;
-; updateList[11] = MSB(i16) | NT_UPD_HORZ;
+; updateList[11] = MSB(var16Bit) | NT_UPD_HORZ;
 ;
-	.dbg	line, "src/gamePhase.h", 197
-L02BD:	lda     _i16+1
+	.dbg	line, "src/gamePhase.h", 213
+L02E2:	lda     _var16Bit+1
 	ora     #$40
 	sta     _updateList+11
 ;
-; updateList[12] = LSB(i16);
+; updateList[12] = LSB(var16Bit);
 ;
-	.dbg	line, "src/gamePhase.h", 198
-	lda     _i16
+	.dbg	line, "src/gamePhase.h", 214
+	lda     _var16Bit
 	sta     _updateList+12
 ;
-; ++stackHeight;
+; if (blockSize == 0)
 ;
-	.dbg	line, "src/gamePhase.h", 201
-	inc     _stackHeight
+	.dbg	line, "src/gamePhase.h", 217
+	lda     _blockSize
+	bne     L03E7
 ;
-; if (stackHeight >= WIN_STACK_HEIGHT)
+; gameResult = 0;
 ;
-	.dbg	line, "src/gamePhase.h", 202
-	lda     _stackHeight
-	cmp     #$0A
-	lda     #$00
-	tax
+	.dbg	line, "src/gamePhase.h", 219
+	sta     _gameResult
 ;
 ; break;
 ;
-	.dbg	line, "src/gamePhase.h", 204
-	bcs     L02F8
+	.dbg	line, "src/gamePhase.h", 220
+	jmp     L0265
 ;
-; blockX = CENTER_X << FP_BITS;
+; ++stackHeight;
 ;
-	.dbg	line, "src/gamePhase.h", 210
-	ldx     #$08
-	sta     _blockX
-	stx     _blockX+1
+	.dbg	line, "src/gamePhase.h", 224
+L03E7:	inc     _stackHeight
 ;
-; blockTileX = CENTER_X >> TILE_SIZE_BIT;
+; if (stackHeight >= WIN_STACK_HEIGHT)
 ;
-	.dbg	line, "src/gamePhase.h", 211
-	stx     _blockTileX
+	.dbg	line, "src/gamePhase.h", 225
+	lda     _stackHeight
+	cmp     #$0A
+	bcc     L02F4
 ;
-; blockTileY -= 1;
+; gameResult = 1;
 ;
-	.dbg	line, "src/gamePhase.h", 212
-	dec     _blockTileY
+	.dbg	line, "src/gamePhase.h", 227
+	lda     #$01
+	sta     _gameResult
+;
+; break;
+;
+	.dbg	line, "src/gamePhase.h", 228
+	jmp     L03E9
+;
+; blockPosX = CENTER_X << FP_BITS;
+;
+	.dbg	line, "src/gamePhase.h", 232
+L02F4:	ldx     #$07
+	lda     #$00
+	sta     _blockPosX
+	stx     _blockPosX+1
+;
+; blockCoordX = CENTER_X >> TILE_SIZE_BIT;
+;
+	.dbg	line, "src/gamePhase.h", 233
+	stx     _blockCoordX
+;
+; blockCoordY -= 1;
+;
+	.dbg	line, "src/gamePhase.h", 234
+	dec     _blockCoordY
+;
+; isMoveRight = (rand8() < 128) ? 0 : 1;
+;
+	.dbg	line, "src/gamePhase.h", 236
+	jsr     _rand8
+	cmp     #$80
+	bcs     L0303
+	lda     #$00
+	jmp     L03E8
+L0303:	lda     #$01
+L03E8:	sta     _isMoveRight
 ;
 ; blockSpeed += INCREMENT_SPEED;
 ;
-	.dbg	line, "src/gamePhase.h", 215
-	lda     #$00
+	.dbg	line, "src/gamePhase.h", 239
+	lda     #$04
 	clc
 	adc     _blockSpeed
 	sta     _blockSpeed
 ;
 ; while (1)
 ;
-	.dbg	line, "src/gamePhase.h", 101
-	jmp     L02EE
+	.dbg	line, "src/gamePhase.h", 109
+	jmp     L03DA
+;
+; delay(1);
+;
+	.dbg	line, "src/gamePhase.h", 244
+L0265:	lda     #$01
+L03E9:	jsr     _delay
+;
+; oam_clear();
+;
+	.dbg	line, "src/gamePhase.h", 245
+	jsr     _oam_clear
+;
+; set_vram_update(NULL);
+;
+	.dbg	line, "src/gamePhase.h", 248
+	ldx     #$00
+	txa
+	jmp     _set_vram_update
+	.dbg	line
+
+.endproc
+
+; ---------------------------------------------------------------
+; void __near__ resultPhase (void)
+; ---------------------------------------------------------------
+
+.segment	"CODE"
+
+.proc	_resultPhase: near
+
+	.dbg	func, "resultPhase", "00", extern, "_resultPhase"
+
+.segment	"CODE"
+
+;
+; if (!gameResult)
+;
+	.dbg	line, "src/resultPhase.h", 21
+	lda     _gameResult
+	jne     L033C
+;
+; ppu_off();
+;
+	.dbg	line, "src/resultPhase.h", 24
+	jsr     _ppu_off
+;
+; vram_adr(0x2189);
+;
+	.dbg	line, "src/resultPhase.h", 27
+	ldx     #$21
+	lda     #$89
+	jsr     _vram_adr
+;
+; vram_write((unsigned char*)fail_nam1, 14);
+;
+	.dbg	line, "src/resultPhase.h", 28
+	lda     #<(_fail_nam1)
+	ldx     #>(_fail_nam1)
+	jsr     pushax
+	ldx     #$00
+	lda     #$0E
+	jsr     _vram_write
+;
+; vram_adr(0x21a9);
+;
+	.dbg	line, "src/resultPhase.h", 29
+	ldx     #$21
+	lda     #$A9
+	jsr     _vram_adr
+;
+; vram_write((unsigned char*)fail_nam2, 14);
+;
+	.dbg	line, "src/resultPhase.h", 30
+	lda     #<(_fail_nam2)
+	ldx     #>(_fail_nam2)
+	jsr     pushax
+	ldx     #$00
+	lda     #$0E
+	jsr     _vram_write
+;
+; vram_adr(0x21c9);
+;
+	.dbg	line, "src/resultPhase.h", 31
+	ldx     #$21
+	lda     #$C9
+	jsr     _vram_adr
+;
+; vram_write((unsigned char*)fail_nam3, 14);
+;
+	.dbg	line, "src/resultPhase.h", 32
+	lda     #<(_fail_nam3)
+	ldx     #>(_fail_nam3)
+	jsr     pushax
+	ldx     #$00
+	lda     #$0E
+	jsr     _vram_write
+;
+; pal_col(4, 0x0f);
+;
+	.dbg	line, "src/resultPhase.h", 35
+	lda     #$04
+	jsr     pusha
+	lda     #$0F
+	jsr     _pal_col
+;
+; pal_col(5, 0x16);
+;
+	.dbg	line, "src/resultPhase.h", 36
+	lda     #$05
+	jsr     pusha
+	lda     #$16
+	jsr     _pal_col
+;
+; pal_col(6, 0x27);
+;
+	.dbg	line, "src/resultPhase.h", 37
+	lda     #$06
+	jsr     pusha
+	lda     #$27
+	jsr     _pal_col
+;
+; pal_col(7, 0x37);
+;
+	.dbg	line, "src/resultPhase.h", 38
+	lda     #$07
+	jsr     pusha
+	lda     #$37
+	jsr     _pal_col
+;
+; ppu_wait_frame();
+;
+	.dbg	line, "src/resultPhase.h", 41
+	jsr     _ppu_wait_frame
+;
+; ppu_on_all();
+;
+	.dbg	line, "src/resultPhase.h", 42
+	jsr     _ppu_on_all
+;
+; music_play(MUSIC_LOSE);
+;
+	.dbg	line, "src/resultPhase.h", 45
+	lda     #$05
+	jsr     _music_play
+;
+; ppu_wait_frame();
+;
+	.dbg	line, "src/resultPhase.h", 51
+L035E:	jsr     _ppu_wait_frame
+;
+; ++frameCounter;
+;
+	.dbg	line, "src/resultPhase.h", 52
+	inc     _frameCounter
+;
+; bank_bg((frameCounter >> 4)&1);
+;
+	.dbg	line, "src/resultPhase.h", 55
+	lda     _frameCounter
+	lsr     a
+	lsr     a
+	lsr     a
+	lsr     a
+	and     #$01
+	jsr     _bank_bg
+;
+; if (pad_trigger(0))
+;
+	.dbg	line, "src/resultPhase.h", 57
+	lda     #$00
+	jsr     _pad_trigger
+	tax
+	beq     L035E
+;
+; break;
+;
+	.dbg	line, "src/resultPhase.h", 59
+	jmp     L036E
+;
+; music_play(MUSIC_WELL_DONE);
+;
+	.dbg	line, "src/resultPhase.h", 67
+L033C:	lda     #$04
+	jsr     _music_play
+;
+; ppu_wait_frame();
+;
+	.dbg	line, "src/resultPhase.h", 72
+L036D:	jsr     _ppu_wait_frame
+;
+; ++frameCounter;
+;
+	.dbg	line, "src/resultPhase.h", 73
+	inc     _frameCounter
+;
+; pal_col(8, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x0f : 0x0f);
+;
+	.dbg	line, "src/resultPhase.h", 76
+	lda     #$08
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	lda     #$0F
+	jsr     _pal_col
+;
+; pal_col(9, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x15 : 0x16);
+;
+	.dbg	line, "src/resultPhase.h", 77
+	lda     #$09
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03F1
+	lda     #$15
+	jmp     L03F2
+L03F1:	lda     #$16
+L03F2:	jsr     _pal_col
+;
+; pal_col(10, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x25 : 0x27);
+;
+	.dbg	line, "src/resultPhase.h", 78
+	lda     #$0A
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03F3
+	lda     #$25
+	jmp     L03F4
+L03F3:	lda     #$27
+L03F4:	jsr     _pal_col
+;
+; pal_col(11, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x35 : 0x37);
+;
+	.dbg	line, "src/resultPhase.h", 79
+	lda     #$0B
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03F5
+	lda     #$35
+	jmp     L03F6
+L03F5:	lda     #$37
+L03F6:	jsr     _pal_col
+;
+; pal_col(4, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x0f : 0x0f);
+;
+	.dbg	line, "src/resultPhase.h", 82
+	lda     #$04
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	lda     #$0F
+	jsr     _pal_col
+;
+; pal_col(5, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x11 : 0x16);
+;
+	.dbg	line, "src/resultPhase.h", 83
+	lda     #$05
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03F7
+	lda     #$11
+	jmp     L03F8
+L03F7:	lda     #$16
+L03F8:	jsr     _pal_col
+;
+; pal_col(6, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x21 : 0x27);
+;
+	.dbg	line, "src/resultPhase.h", 84
+	lda     #$06
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03F9
+	lda     #$21
+	jmp     L03FA
+L03F9:	lda     #$27
+L03FA:	jsr     _pal_col
+;
+; pal_col(7, (frameCounter & COLOR_SWAP_FRAME_BIT) ? 0x31 : 0x37);
+;
+	.dbg	line, "src/resultPhase.h", 85
+	lda     #$07
+	jsr     pusha
+	lda     _frameCounter
+	and     #$08
+	beq     L03FB
+	lda     #$31
+	jmp     L03FC
+L03FB:	lda     #$37
+L03FC:	jsr     _pal_col
+;
+; bank_bg((frameCounter >> 2)&1);
+;
+	.dbg	line, "src/resultPhase.h", 88
+	lda     _frameCounter
+	lsr     a
+	lsr     a
+	and     #$01
+	jsr     _bank_bg
+;
+; if (pad_trigger(0))
+;
+	.dbg	line, "src/resultPhase.h", 91
+	lda     #$00
+	jsr     _pad_trigger
+	tax
+	jeq     L036D
 ;
 ; pal_fade_to(0);
 ;
-	.dbg	line, "src/gamePhase.h", 220
-L02F8:	jmp     _pal_fade_to
+	.dbg	line, "src/resultPhase.h", 99
+L036E:	ldx     #$00
+	txa
+	jmp     _pal_fade_to
 	.dbg	line
 
 .endproc
@@ -1375,25 +1862,23 @@ L02F8:	jmp     _pal_fade_to
 ;
 ; titlePhase();
 ;
-	.dbg	line, "src\main.c", 92
-L02D8:	jsr     _titlePhase
+	.dbg	line, "src\main.c", 73
+L03BC:	jsr     _titlePhase
 ;
-; pal_fade_to(0);
+; gamePhase();  
 ;
-	.dbg	line, "src\main.c", 94
-	ldx     #$00
-	txa
-	jsr     _pal_fade_to
-;
-; gamePhase();
-;
-	.dbg	line, "src\main.c", 96
+	.dbg	line, "src\main.c", 74
 	jsr     _gamePhase
 ;
-; while (1) // Infinite loop
+; resultPhase();
 ;
-	.dbg	line, "src\main.c", 90
-	jmp     L02D8
+	.dbg	line, "src\main.c", 75
+	jsr     _resultPhase
+;
+; while (1)
+;
+	.dbg	line, "src\main.c", 71
+	jmp     L03BC
 	.dbg	line
 
 .endproc
