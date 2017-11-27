@@ -51,6 +51,11 @@ static unsigned char updateList[UPDATE_LIST_SIZE];
 #define WIN_STACK_HEIGHT 10		// Height of the stack needed to win
 #define TILE_SIZE_BIT 4			//
 #define TILE_PLUS_FP_BITS (TILE_SIZE_BIT + FP_BITS)
+#define BLOCK_WIDTH_BIT	4		// Used for converting from blocks to bytes (bytes = blocks << BLOCK_WIDTH_BIT)
+#define BASE_BLOCK_WIDTH 14		// Width of playfield base in blocks
+// VRAM update list content indices
+#define UPPER_START 3			// Upper row
+#define LOWER_START 14			// Lower row
 
 // Variables
 static unsigned int blockX;			// Current block x-position
@@ -58,12 +63,13 @@ static unsigned char blockTileX;	// Block coordinates
 static unsigned char blockTileY;
 static unsigned char blockSpeed; 	// Current movmement speed
 static unsigned char blockCount;	// Current block count
-static unsigned char blockGroupWidth; // Current block group width
 static unsigned char direction;		// Current movement direction
 static unsigned char stackHeight;	// Current stack height
 static unsigned char isMoving;
-static unsigned char minStackableX;	// The minimum x coord that allows stacking
-
+static unsigned char prevStartX;
+static unsigned char prevBlockCount;
+static unsigned char overlapStartX;
+static unsigned char overlapBlockCount;
 
 void gamePhase(void)
 {	
@@ -88,11 +94,11 @@ void gamePhase(void)
 	blockTileY = BASE_Y >> TILE_SIZE_BIT;
 	blockSpeed = INIT_SPEED;
 	blockCount = INIT_BLOCK_COUNT;
-	blockGroupWidth = BLOCK_SIZE * blockCount;
 	direction = 1;
 	stackHeight = 0;
-	minStackableX = 0;
 	isMoving = 1;
+	prevStartX = 0;		// Left edge of playfield
+	prevBlockCount = BASE_BLOCK_WIDTH;
 	
 	// Set up update list
 	memcpy(updateList, updateListData, sizeof(updateListData));
@@ -134,7 +140,7 @@ void gamePhase(void)
 				
 		// Check if block group has hit the edges
 		if ((blockX >> FP_BITS) <= SCREEN_MIN ||
-			(blockX >> FP_BITS) >= (SCREEN_MAX - blockGroupWidth))
+			(blockX >> FP_BITS) >= (SCREEN_MAX - (blockCount << BLOCK_WIDTH_BIT)))
 		{
 			// Reverse direction when hitting the screen edge
 			direction ^= 1;
@@ -143,59 +149,36 @@ void gamePhase(void)
 		// Check for any player input
 		if (pad_trigger(0))
 		{
-			//isMoving = 0;
-			
-			if (stackHeight < 1)
-			{
-				minStackableX = blockTileX;
-			}
-			
-			// Check for floaing blocks
-			if (blockTileX != minStackableX)
-			{
-				j = (blockTileX < minStackableX) ? (minStackableX - blockTileX)
-				: (blockTileX - minStackableX);
-				if (j > blockCount)
-				{
-					j = blockCount;
-				}
-				
-				// Replace floating blocks with the empty tile
-				for (i = 0; i < (j << 1); ++i)
-				{
-					updateList[2 + (blockCount << 1) - i] = 0x00;
-					updateList[13 + (blockCount << 1) - i] = 0x00;
-				}
-				// TODO: Store bit-shifted values somewhere?
-				
-				// Update the stackable area edge
-				if (blockTileX > minStackableX)
-				{
-					minStackableX = blockTileX;
-				}
-				
-				// Update the block count
-				oam_clear();
-				blockCount -= j;
-				blockGroupWidth = BLOCK_SIZE * blockCount;
-				// TODO: Remove multiplication above
-			}
-			
+			// Get the start tile and amount of overlap
+			overlapStartX = MAX(blockTileX, prevStartX);
+			overlapBlockCount = MIN(prevStartX + prevBlockCount - 1, blockTileX + blockCount - 1) - MAX(blockTileX, prevStartX) + 1;
+		
 			// Check if gameover: no blocks landed correctly
-			if (blockCount == 0)
+			if (overlapBlockCount == 0 || overlapBlockCount > BASE_BLOCK_WIDTH)
 			{
 				break;
 			}
 			
+			// Update variables for previous block
+			prevStartX = overlapStartX;
+			prevBlockCount = overlapBlockCount;
+			
 			// Fix stacked blocks in their current position
-			// by converting them into background tiles	
-			i16 = NTADR_A(minStackableX << 1, (blockTileY - 1) << 1);
+			// by converting them into background tiles
+			// Set start addresses
+			i16 = NTADR_A(overlapStartX << 1, (blockTileY - 1) << 1);
 			updateList[0] = MSB(i16) | NT_UPD_HORZ;
 			updateList[1] = LSB(i16);
 			i16 += 32;
 			updateList[11] = MSB(i16) | NT_UPD_HORZ;
 			updateList[12] = LSB(i16);
-			
+			// Keep first overlapBlockCount*2 items as is, and set the rest to 0x00
+			for (i = overlapBlockCount<<1; i < INIT_BLOCK_COUNT<<1; ++i)
+			{
+				updateList[UPPER_START + i] = 0x00;
+				updateList[LOWER_START + i] = 0x00;
+			}
+
 			// Check if game has been won
 			++stackHeight;
 			if (stackHeight >= WIN_STACK_HEIGHT)
@@ -209,7 +192,9 @@ void gamePhase(void)
 			blockX = CENTER_X << FP_BITS;
 			blockTileX = CENTER_X >> TILE_SIZE_BIT;
 			blockTileY -= 1;
-			
+			blockCount = overlapBlockCount;			
+			oam_clear();
+
 			// Increase block speed
 			blockSpeed += INCREMENT_SPEED;
 		}
